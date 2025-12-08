@@ -1,0 +1,6 @@
+.modal-card-title {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: calc(100% - 40px); /* X butonuna yer bırakmak için */
+}

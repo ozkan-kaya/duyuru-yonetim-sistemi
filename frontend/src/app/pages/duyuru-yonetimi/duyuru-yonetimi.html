@@ -1,0 +1,245 @@
+<section class="section">
+  <div class="container">
+
+    <div class="level">
+      <div class="level-left">
+        <h1 class="title is-2">Duyuru Yönetimi</h1>
+      </div>
+      <div class="level-right">
+        <button class="button is-primary" (click)="openModal()">
+          <span class="icon"><i class="fas fa-plus"></i></span>
+          <span>Yeni Duyuru Ekle</span>
+        </button>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- Arama ve Sıralama -->
+    <div class="level is-mobile mb-4">
+      <div class="level-left">
+        <div class="level-item">
+          <h2 class="title is-4 mb-0">Duyuru Listesi</h2>
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <input class="input" type="text" placeholder="Ara..." style="min-width: 250px;" [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange($event)">
+        </div>
+        <div class="level-item">
+          <div class="select">
+            <select [ngModel]="selectedDepartment" (ngModelChange)="onDepartmentFilterChange($event)">
+              <option [ngValue]="null">Tüm Departmanlar</option>
+              @for (dept of departmanlar; track dept.id) {
+              <option [value]="dept.id">{{ dept.departman_adi || dept.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="level-item">
+          <div class="select">
+            <select [(ngModel)]="sortOrder" (change)="onSortChange()">
+              <option value="id-desc">ID'ye Göre (Azalan)</option>
+              <option value="id-asc">ID'ye Göre (Artan)</option>
+              <option value="new-to-old">Tarihe Göre (Yeni → Eski)</option>
+              <option value="old-to-new">Tarihe Göre (Eski → Yeni)</option>
+              <option value="priority-high-low">Önceliğe Göre (Yüksek → Düşük)</option>
+              <option value="priority-low-high">Önceliğe Göre (Düşük → Yüksek)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste -->
+    <div class="box">
+      <div class="table-container">
+        <table class="table is-fullwidth is-striped is-hoverable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Başlık</th>
+              <th>Öncelik</th>
+              <th>Başlangıç</th>
+              <th>Bitiş</th>
+              <th>Durum</th>
+              <th class="has-text-right">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (duyuru of filteredDuyurular; track duyuru.id) {
+            <tr>
+              <td>{{ duyuru.id }}</td>
+              <td><strong>{{ duyuru.baslik }}</strong></td>
+              <td>
+                <span class="tag" [class.is-danger]="duyuru.oncelik === 3" [class.is-warning]="duyuru.oncelik === 2"
+                  [class.is-info]="duyuru.oncelik === 1">
+                  {{ duyuru.oncelik === 3 ? 'Yüksek' : duyuru.oncelik === 2 ? 'Orta' : 'Düşük' }}
+                </span>
+              </td>
+              <td>{{ duyuru.duyuru_baslangic_tarihi | date: 'dd.MM.yyyy' }}</td>
+              <td>
+                @if (duyuru.duyuru_bitis_tarihi) {
+                {{ duyuru.duyuru_bitis_tarihi | date: 'dd.MM.yyyy' }}
+                } @else {
+                Süresiz
+                }
+              </td>
+              <td>
+                @let status = getDuyuruStatus(duyuru);
+                @if (status === 'expired') {
+                <span class="tag is-danger">Süresi Doldu</span>
+                } @else if (status === 'future') {
+                <span class="tag is-warning">Henüz Listelenmedi</span>
+                } @else {
+                <span class="tag is-info">Aktif</span>
+                }
+              </td>
+              <td class="has-text-right">
+                <div class="buttons is-right">
+                  <button class="button is-small is-info is-light" (click)="openUpdateModal(duyuru)" title="Düzenle">
+                    <span class="icon"><i class="fas fa-edit"></i></span>
+                  </button>
+                  <button class="button is-small is-danger is-light" (click)="deleteDuyuru(duyuru.id, duyuru.baslik)"
+                    title="Sil">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="7" class="has-text-centered">
+                @if (searchQuery.trim().length >= 2) {
+                <div class="py-4">
+                  <span class="icon is-large">
+                    <i class="fas fa-search fa-2x"></i>
+                  </span>
+                  <p class="mt-2">Arama sonucu bulunamadı.</p>
+                </div>
+                } @else {
+                <div class="py-4">
+                  <span class="icon is-large">
+                    <i class="fas fa-bullhorn fa-2x"></i>
+                  </span>
+                  <p class="mt-2">Kayıtlı duyuru bulunamadı.</p>
+                </div>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal" [class.is-active]="isModalActive">
+  <div class="modal-background" (click)="closeModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">{{ isEditMode ? 'Duyuru Düzenle' : 'Yeni Duyuru Ekle' }}</p>
+      <button class="delete is-large" aria-label="close" (click)="closeModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      @if (isModalActive) {
+      @if (message) {
+      <div class="notification" [class.is-danger]="message.includes('hata')"
+        [class.is-success]="message.includes('başarıyla') || message.includes('yürütülüyor')">
+        {{ message }}
+      </div>
+      }
+
+      <form [formGroup]="duyuruForm">
+        <div class="field">
+          <label class="label">Başlık <span class="has-text-danger">*</span></label>
+          <div class="control">
+            <input class="input" type="text" formControlName="baslik" placeholder="Duyuru başlığı">
+          </div>
+          @if (baslikControl?.invalid && (baslikControl?.dirty || baslikControl?.touched)) {
+          <p class="help is-danger">Başlık zorunludur ve en fazla 75 karakter olabilir.</p>
+          }
+        </div>
+
+        <div class="field">
+          <label class="label">Açıklama <span class="has-text-danger">*</span></label>
+          <div class="control">
+            <textarea class="textarea" formControlName="aciklama" placeholder="Duyuru açıklaması"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Öncelik <span class="has-text-danger">*</span></label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select formControlName="oncelik">
+                <option [ngValue]="1">Düşük</option>
+                <option [ngValue]="2">Orta</option>
+                <option [ngValue]="3">Yüksek</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="columns">
+          <div class="column">
+            <div class="field">
+              <label class="label">Başlangıç Tarihi</label>
+              <div class="control">
+                <input class="input" type="date" formControlName="duyuru_baslangic_tarihi">
+              </div>
+            </div>
+          </div>
+          <div class="column">
+            <div class="field">
+              <label class="label">Bitiş Tarihi</label>
+              <div class="control">
+                <input class="input" type="date" formControlName="duyuru_bitis_tarihi">
+              </div>
+              <p class="help">Boş bırakılırsa süresiz olacaktır.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Hedef Departmanlar <span class="has-text-danger">*</span></label>
+          <div class="control">
+            <div class="box p-0" style="height: 150px; overflow-y: auto;">
+              @for (dept of departmanlar; track dept.id) {
+              <a class="panel-block" [class.is-active]="isDepartmentSelected(dept.id)"
+                [style.background-color]="isDepartmentSelected(dept.id) ? '#3273dc' : 'transparent'"
+                [style.color]="isDepartmentSelected(dept.id) ? '#fff' : ''" (click)="toggleDepartment(dept.id)">
+                <span class="icon">
+                  <i class="far" [class.fa-check-square]="isDepartmentSelected(dept.id)"
+                    [class.fa-square]="!isDepartmentSelected(dept.id)"></i>
+                </span>
+                {{ dept.name }}
+              </a>
+              }
+            </div>
+            <div class="buttons mt-2 is-right">
+              <button type="button" class="button" (click)="selectAllDepartments()">Tümünü Seç</button>
+              <button type="button" class="button" (click)="deselectAllDepartments()">Seçimi Temizle</button>
+            </div>
+            @if (duyuruForm.get('departmanlar')?.invalid && (duyuruForm.get('departmanlar')?.dirty ||
+            duyuruForm.get('departmanlar')?.touched)) {
+            <p class="help is-danger">En az bir departman seçmelisiniz.</p>
+            }
+          </div>
+        </div>
+      </form>
+      }
+    </section>
+    <footer class="modal-card-foot" style="justify-content: flex-end">
+      <button class="button mr-3" (click)="closeModal()">İptal</button>
+      <button class="button is-success" (click)="onSubmit()" [class.is-loading]="uploading"
+        [disabled]="duyuruForm.invalid || uploading || (isEditMode && !isFormDirtyOrFileSelected)">
+        {{ isEditMode ? 'Güncelle' : 'Kaydet' }}
+      </button>
+    </footer>
+  </div>
+</div>

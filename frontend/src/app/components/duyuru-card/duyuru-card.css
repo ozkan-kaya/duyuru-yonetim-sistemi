@@ -1,0 +1,50 @@
+.card {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.duyuru-card-header {
+  flex-shrink: 0;
+}
+
+.content {
+  flex-grow: 1;
+}
+
+.duyuru-aciklama {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+  max-height: 4.5em;
+}
+
+.duyuru-card-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.columns.is-multiline {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.columns.is-multiline>.column {
+  display: flex;
+}

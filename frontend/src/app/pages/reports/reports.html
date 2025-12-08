@@ -1,0 +1,226 @@
+<section class="section">
+  <div class="container">
+    <h1 class="title is-2">Duyuru Raporları</h1>
+    <hr>
+
+    <div class="columns is-multiline mb-5">
+      <!-- Toplam Duyuru Sayısı -->
+      <div class="column is-6">
+        <div class="box h-100 is-flex is-flex-direction-column is-justify-content-center">
+          <div class="has-text-centered">
+            <p class="heading is-size-6 mb-2">Toplam Duyuru</p>
+            <p class="title is-1">{{ totalDuyuruCount }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aktif Duyuru Sayısı -->
+      <div class="column is-6">
+        <div class="box h-100 is-flex is-flex-direction-column is-justify-content-center">
+          <div class="has-text-centered">
+            <p class="heading is-size-6 mb-2">Listelenen Duyuru</p>
+            <p class="title is-1">{{ totalActiveDuyuruCount }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departmanlara Göre Toplam Duyuru Dağılımı -->
+      <div class="column is-6">
+        <div class="box h-100">
+          <p class="heading is-size-6 mb-3 has-text-centered">Departmanlara Göre Toplam Duyuru Dağılımı</p>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="departmentChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departmanlara Göre Listelenen Duyuru Dağılımı -->
+      <div class="column is-6">
+        <div class="box h-100">
+          <p class="heading is-size-6 mb-3 has-text-centered">Departmanlara Göre Listelenen Duyuru Dağılımı</p>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="activeDepartmentChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- Başlık ve Filtreler -->
+    <div class="level is-mobile mb-4">
+      <div class="level-left">
+        <div class="level-item">
+          <h2 class="title is-4 mb-0">Okunma Raporu</h2>
+        </div>
+      </div>
+      <div class="level-right">
+        <div class="level-item">
+          <input class="input" type="text" placeholder="Ara..." style="min-width: 250px;" [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange($event)">
+        </div>
+        <div class="level-item">
+          <div class="select">
+            <select [ngModel]="selectedDepartment" (ngModelChange)="onDepartmentFilterChange($event)">
+              <option [ngValue]="null">Tüm Departmanlar</option>
+              @for (dept of departmentList; track dept.id) {
+              <option [value]="dept.id">{{ dept.departman_adi || dept.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="level-item">
+          <div class="select">
+            <select [(ngModel)]="sortOrder" (change)="onSortChange()">
+              <option value="id-desc">ID'ye Göre (Azalan)</option>
+              <option value="id-asc">ID'ye Göre (Artan)</option>
+              <option value="new-to-old">Tarihe Göre (Yeni → Eski)</option>
+              <option value="old-to-new">Tarihe Göre (Eski → Yeni)</option>
+              <option value="most-read">Okunmaya Göre (Çok → Az)</option>
+              <option value="least-read">Okunmaya Göre (Az → Çok)</option>
+              <option value="priority-high-low">Önceliğe Göre (Yüksek → Düşük)</option>
+              <option value="priority-low-high">Önceliğe Göre (Düşük → Yüksek)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tablo -->
+    <div class="box">
+      <div class="table-container">
+        <table class="table is-fullwidth is-striped is-hoverable">
+          <thead>
+            <tr>
+              <th style="width: 5%;">ID</th>
+              <th style="width: 30%;">Başlık</th>
+              <th style="width: 12%;">Öncelik</th>
+              <th style="width: 12%;">Başlangıç</th>
+              <th style="width: 12%;">Bitiş</th>
+              <th style="width: 12%;">Oluşturan</th>
+              <th style="width: 9%;">Okunma</th>
+              <th style="width: 10%;">Durum</th>
+              <th class="has-text-centered" style="width: 10%;">Detay</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (duyuru of filteredDuyuruListesi; track duyuru.id) {
+            <tr>
+              <td>{{ duyuru.id }}</td>
+              <td><strong>{{ duyuru.baslik }}</strong></td>
+              <td>
+                <span class="tag" [class.is-danger]="duyuru.oncelik === 3" [class.is-warning]="duyuru.oncelik === 2"
+                  [class.is-info]="duyuru.oncelik === 1">
+                  {{ duyuru.oncelik === 3 ? 'Yüksek' : duyuru.oncelik === 2 ? 'Orta' : 'Düşük' }}
+                </span>
+              </td>
+              <td>{{ duyuru.duyuru_baslangic_tarihi | date:'dd.MM.yyyy' }}</td>
+              <td>{{ duyuru.duyuru_bitis_tarihi ? (duyuru.duyuru_bitis_tarihi | date:'dd.MM.yyyy') : 'Süresiz' }}</td>
+              <td>{{ duyuru.olusturan_isim || 'N/A' }}</td>
+              <td>
+                <span class="tag is-primary is-medium">{{ duyuru.okunma_sayisi || 0 }}</span>
+              </td>
+              <td>
+                @let status = getDuyuruStatus(duyuru);
+                @if (status === 'expired') {
+                <span class="tag is-danger">Süresi Doldu</span>
+                } @else if (status === 'future') {
+                <span class="tag is-warning">Henüz Listelenmedi</span>
+                } @else {
+                <span class="tag is-info">Aktif</span>
+                }
+              </td>
+              <td class="has-text-centered">
+                <button class="button is-small is-link" (click)="openModal(duyuru.id, duyuru.baslik)">
+                  <span class="icon is-small">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                  <span>Detay</span>
+                </button>
+              </td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="8" class="has-text-centered">
+                @if (searchQuery.trim().length >= 2) {
+                <div class="py-4">
+                  <span class="icon is-large has-text-grey">
+                    <i class="fas fa-search fa-2x"></i>
+                  </span>
+                  <p class="mt-2">Arama sonucu bulunamadı.</p>
+                </div>
+                } @else {
+                <div class="py-4">
+                  <span class="icon is-large has-text-grey">
+                    <i class="fas fa-inbox fa-2x"></i>
+                  </span>
+                  <p class="mt-2">Raporlanacak duyuru bulunamadı.</p>
+                </div>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detay Modal -->
+    <div class="modal" [class.is-active]="isModalActive">
+      <div class="modal-background" (click)="closeModal()"></div>
+      <div class="modal-card">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Okunma Detayları</p>
+          <button class="delete is-large" aria-label="close" (click)="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+          <h2 class="title is-5 mb-2">{{ modalDuyuruBasligi }}</h2>
+          <h3 class="subtitle is-6">Bu duyuruyu okuyan toplam kullanıcı sayısı: {{ modalOkuyanlarListesi.length }}</h3>
+
+          @if (modalLoading) {
+          <div class="has-text-centered py-5">
+            <span class="icon is-large">
+              <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p class="mt-2">Yükleniyor...</p>
+          </div>
+          } @else {
+          <div class="table-container">
+            <table class="table is-fullwidth is-striped">
+              <thead>
+                <tr>
+                  <th>Sicil</th>
+                  <th>İsim</th>
+                  <th>Okunma Tarihi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (kullanici of modalOkuyanlarListesi; track kullanici.sicil) {
+                <tr>
+                  <td>{{ kullanici.sicil }}</td>
+                  <td>{{ kullanici.isim }}</td>
+                  <td>{{ kullanici.okunma_tarihi | date: 'dd/MM/yyyy HH:mm' }}</td>
+                </tr>
+                } @empty {
+                <tr>
+                  <td colspan="3" class="has-text-centered has-text-grey">
+                    <div class="py-4">
+                      <span class="icon is-large">
+                        <i class="fas fa-inbox fa-2x"></i>
+                      </span>
+                      <p class="mt-2">Bu duyuruyu henüz kimse okumamış.</p>
+                    </div>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+        </section>
+        <footer class="modal-card-foot is-justify-content-flex-end">
+          <button class="button" (click)="closeModal()">Kapat</button>
+        </footer>
+      </div>
+    </div>

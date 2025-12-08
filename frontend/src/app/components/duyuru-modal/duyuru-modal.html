@@ -1,0 +1,75 @@
+<div class="modal" [class.is-active]="isActive">
+  <div class="modal-background" (click)="close()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">{{ duyuru?.baslik }}</p>
+      <button class="delete is-large" aria-label="close" (click)="close()"></button>
+    </header>
+    <section class="modal-card-body">
+      @if (isExpired()) {
+      <div class="notification is-danger">
+        <strong>Bu duyurunun süresi dolmuştur.</strong>
+      </div>
+      }
+
+      <div class="content">
+        <div class="mb-5">
+          <div class="is-flex is-flex-wrap-wrap" style="gap: 0.75rem;">
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-small mr-1">
+                <i class="fas fa-flag"></i>
+              </span>
+              <span class="has-text-weight-semibold mr-2">Öncelik:</span>
+              <span class="tag" [class.is-danger]="duyuru?.oncelik === 3" [class.is-warning]="duyuru?.oncelik === 2"
+                [class.is-info]="duyuru?.oncelik === 1">
+                {{ duyuru?.oncelik === 3 ? 'Yüksek' : duyuru?.oncelik === 2 ? 'Orta' : 'Düşük' }}
+              </span>
+            </div>
+
+            <!-- Departments -->
+            @if (duyuru && duyuru.departmanlar && duyuru.departmanlar.length > 0) {
+            <div class="is-flex is-align-items-center">
+              <span class="icon is-small mr-1">
+                <i class="fas fa-building"></i>
+              </span>
+              <span class="has-text-weight-semibold mr-2">Departman:</span>
+              <span class="tag is-link">
+                {{ getDepartmentNames() }}
+              </span>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Aciklama -->
+        <div class="box">
+          <p class="is-size-6">{{ duyuru?.aciklama }}</p>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <div class="level is-mobile mb-0" style="width: 100%;">
+        <div class="level-left">
+          <div class="level-item has-text-grey">
+            <span class="icon is-small mr-1">
+              <i class="far fa-calendar-alt"></i>
+            </span>
+            <span>
+              <strong>Tarih:</strong> {{ duyuru?.duyuru_baslangic_tarihi | date: 'dd/MM/yyyy' }}
+              @if (duyuru?.duyuru_bitis_tarihi){
+              - {{ duyuru?.duyuru_bitis_tarihi | date: 'dd/MM/yyyy' }}
+              }
+            </span>
+          </div>
+        </div>
+        <div class="level-right">
+          <div class="level-item">
+            <button class="button" (click)="close()">
+              <span>Kapat</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
