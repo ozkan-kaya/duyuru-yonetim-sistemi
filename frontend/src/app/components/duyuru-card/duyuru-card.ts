@@ -18,8 +18,6 @@ export class DuyuruCard {
   constructor(private duyuruService: DuyuruService) { }
 
   onCardClick(): void {
-    console.log('Kart tıklandı - Duyuru:', this.duyuru.id, 'Okundu:', this.duyuru.okundu, 'Tip:', typeof this.duyuru.okundu);
-
     // Kartı tıklandığında duyuruyu parent'a emit et
     this.cardClick.emit(this.duyuru);
 
@@ -34,7 +32,6 @@ export class DuyuruCard {
 
     this.duyuruService.markAsRead(this.duyuru.id).subscribe({
       next: (response) => {
-        console.log('Duyuru okundu olarak işaretlendi:', response.message);
         this.duyuru.okundu = true;
       },
       error: (error) => {

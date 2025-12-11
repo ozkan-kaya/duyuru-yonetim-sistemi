@@ -83,7 +83,6 @@ export class Reports implements OnInit, OnDestroy {
           this.istatistikler = results.stats;
           this.duyuruListesi = results.list;
           this.departmentList = results.departments;
-          console.log('Data loaded, calling calculateDashboardStats');
           this.calculateDashboardStats();
           this.applySearchAndSort();
         },
@@ -244,10 +243,8 @@ export class Reports implements OnInit, OnDestroy {
   }
 
   calculateDashboardStats(): void {
-    console.log('calculateDashboardStats called, duyuruListesi:', this.duyuruListesi);
     this.totalDuyuruCount = this.duyuruListesi.length;
     this.totalActiveDuyuruCount = this.duyuruListesi.filter(d => this.isActive(d)).length;
-    console.log('Total:', this.totalDuyuruCount, 'Active:', this.totalActiveDuyuruCount);
 
     const deptCounts = new Map<string, number>();
     this.duyuruListesi.forEach(duyuru => {
