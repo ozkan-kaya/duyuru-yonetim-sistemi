@@ -158,8 +158,11 @@
         <div class="field">
           <label class="label">Başlık <span class="has-text-danger">*</span></label>
           <div class="control">
-            <input class="input" type="text" formControlName="baslik" placeholder="Duyuru başlığı">
+            <input class="input" type="text" formControlName="baslik" placeholder="Duyuru başlığı" maxlength="75">
           </div>
+          <p class="help has-text-right" [class.has-text-danger]="(baslikControl?.value?.length || 0) > 75">
+            {{ baslikControl?.value?.length || 0 }} / 75
+          </p>
           @if (baslikControl?.invalid && (baslikControl?.dirty || baslikControl?.touched)) {
           <p class="help is-danger">Başlık zorunludur ve en fazla 75 karakter olabilir.</p>
           }
